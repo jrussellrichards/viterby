@@ -1,6 +1,11 @@
 import numpy as np
 import copy
 
+def dptable(V):
+    # Print a table of steps from dictionary
+    yield " ".join(("%12d" % i) for i in range(len(V)))
+    for state in V[0]:
+        yield "%.7s: " % state + " ".join("%.7s" % ("%f" % v[state]["prob"]) for v in V)
 
 def create_map():
     #Representacion mapa: 0:Vacio,1:Pared,2:Oro,3:Wumpus
@@ -74,16 +79,23 @@ def states_prob(mapa):
                 states[i].append(1/44)
     return states
 
+def states_prob_2(states):
+    states_prob=[]
+    for i in range(len(states)):
+        states_prob.append(1/len(states))
 
-def emision(mapa,sequence):
+    return states_prob    
+def emision(mapa,sequence,states):
     m_emision = []
+    n_states=len(states)
+    n_obs=len(sequence)
+    B = np.zeros((n_states, n_obs))
 
    
     for s,i in enumerate(sequence):
         m_emision.append([])
         for j in range(1,5):
             for k in range(1,17):
-
                                    #sur               #norte                 #este               #oeste
                 if(i=="NS"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==0):
                     m_emision[s].append(700/64)
@@ -108,32 +120,10 @@ def init_states(mapa):
     for i,r in enumerate(mapa):                
         for j,c in enumerate(r):            
             if(mapa[i][j]==0):
-                states.append([i,j])
+                states.append([i,j])    
+
     return states
 
-
-
-
-
-def viterbi(obs_seq):
-        # returns the most likely state sequence given observed sequence x
-        # using the Viterbi algorithm
-        T = len(obs_seq)
-        N = A.shape[0]
-        delta = np.zeros((T, N))
-        psi = np.zeros((T, N))
-        delta[0] = pi*B[:,obs_seq[0]]
-        for t in range(1, T):
-            for j in range(N):
-                delta[t,j] = np.max(delta[t-1]*A[:,j]) * B[j, obs_seq[t]]
-                psi[t,j] = np.argmax(delta[t-1]*A[:,j])
-
-        # backtrack
-        states = np.zeros(T, dtype=np.int32)
-        states[T-1] = np.argmax(delta[T-1])
-        for t in range(T-2, -1, -1):
-            states[t] = psi[t+1, states[t+1]]
-        return states
 
 def trans_matrix(mapa,states):
     matrices=[] 
@@ -167,20 +157,65 @@ def trans_matrix(mapa,states):
 
         matrix[i[0]][i[1]]=count/4
 
-        print(matrix)
-        print("----")
         matrices.append(matrix)
     return matrices
 
-        
-if __name__ == "__main__":
+def sequence(init_sequences):
+    matrix=[]
+    for i in init_sequences:
+        if(i=="NS"):
+            matrix.append([1,0,0,0])
+        elif(i=="NWE" ):
+            matrix.append([1,1,0,1])
+        elif(i=="NSE"):
+            matrix.append([1,1,1,0])
+        elif(i=="WE"  ):
+            matrix.append([0,1,0,1])
+        elif(i=="NSW" ):
+            matrix.append([1,0,1,1])
+        elif(i=="E"  ):
+            matrix.append([0,1,0,0])
 
-    mapa=create_map()
-    emision_test=init_secuence(1)
-    prob_emision=emision(mapa,emision_test)
-    states_prob=states_prob(mapa)
-    states=init_states(mapa)
-    trans=trans_matrix(mapa,states)
+    return matrix
+
+def viterbi(obs_seq,A,B,pi):
+        # returns the most likely state sequence given observed sequence x
+        # using the Viterbi algorithm
+        T = len(obs_seq)
+        N = A.shape[0]
+        delta = np.zeros((T, N))
+        psi = np.zeros((T, N))
+        delta[0] = pi*B[:,obs_seq[0]]
+        for t in range(1, T):
+            for j in range(N):
+                delta[t,j] = np.max(delta[t-1]*A[:,j]) * B[j, obs_seq[t]]
+                psi[t,j] = np.argmax(delta[t-1]*A[:,j])
+
+        # backtrack
+        states = np.zeros(T, dtype=np.int32)
+        states[T-1] = np.argmax(delta[T-1])
+        for t in range(T-2, -1, -1):
+            states[t] = psi[t+1, states[t+1]]
+        return states
+
+    #A Matriz de transicion
+    #B Matriz de probabilidad de emision
+    #obs_seq secuencia observada
+    #pi Probabilidad de estados iniciales
+    #states Estados iniciales       
+if __name__ == "__main__":  
+
+    mapa=np.array(create_map())
+    obs_seq=sequence(init_secuence(1))
+    B=np.array(emision(mapa,init_secuence(1)))
+    states=np.array(init_states(mapa))
+    A=np.array(trans_matrix(mapa,states))
+    print(A)
+    pi=np.array(states_prob_2(states))
+   # pi=np.array(states_prob(mapa))
+   # print(states.shape)
+
+    viterbi(obs_seq,A, B,pi)
     #print(trans[0])
 
     
