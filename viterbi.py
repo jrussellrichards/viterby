@@ -91,26 +91,26 @@ def emision(mapa,sequence,states):
     n_obs=len(sequence)
     B = np.zeros((n_states, n_obs))
 
-   
     for s,i in enumerate(sequence):
         m_emision.append([])
-        for j in range(1,5):
-            for k in range(1,17):
-                                   #sur               #norte                 #este               #oeste
-                if(i=="NS"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==0):
-                    m_emision[s].append(700/64)
-                elif(i=="NWE" and mapa[j+1][k]==0 and mapa[j-1][k]==1 and mapa[j][k-1]==1 and mapa[j][k+1]==1):
-                    m_emision[s].append(200/64)
-                elif(i=="NSE" and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==1 and mapa[j][k+1]==0):
-                    m_emision[s].append(200/64)
-                elif(i=="WE"  and mapa[j+1][k]==0 and mapa[j-1][k]==0 and mapa[j][k-1]==1 and mapa[j][k+1]==1):
-                    m_emision[s].append(400/64)
-                elif(i=="NSW"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==1):
-                    m_emision[s].append(200/64) 
-                elif(i=="E"  and mapa[j+1][k]==0 and mapa[j-1][k]==0 and mapa[j][k-1]==1 and mapa[j][k+1]==0):
-                    m_emision[s].append(200/64)
-                else:
-                    m_emision[s].append(0)
+        for stat in states:
+            j=stat[0]
+            k=stat[1]
+            if(i=="NS"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==0):
+                m_emision[s].append(700/64)
+            elif(i=="NWE" and mapa[j+1][k]==0 and mapa[j-1][k]==1 and mapa[j][k-1]==1 and mapa[j][k+1]==1):
+                m_emision[s].append(200/64)
+            elif(i=="NSE" and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==1 and mapa[j][k+1]==0):
+                m_emision[s].append(200/64)
+            elif(i=="WE"  and mapa[j+1][k]==0 and mapa[j-1][k]==0 and mapa[j][k-1]==1 and mapa[j][k+1]==1):
+                m_emision[s].append(400/64)
+            elif(i=="NSW"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==1):
+                m_emision[s].append(200/64) 
+            elif(i=="E"  and mapa[j+1][k]==0 and mapa[j-1][k]==0 and mapa[j][k-1]==1 and mapa[j][k+1]==0):
+                m_emision[s].append(200/64)
+            else:
+                m_emision[s].append(0)   
+
 
     return m_emision  
 
@@ -128,36 +128,35 @@ def init_states(mapa):
 def trans_matrix(mapa,states):
     matrices=[] 
 
+    for i,s1 in enumerate(states):
+        matrices.append([])
+        for s2 in states:
+            if(s1[0]-s2[0]<-1 or s1[0]-s2[0]>1 or s1[1]-s2[1]<-1 or s1[1]-s2[1]>1):
+                matrices[i].append(0)
+            elif(s1[0]-s2[0]==0  and s1[1]-s2[1]==0):
+                count=0
+
+                if(mapa[s1[0]+1][s1[1]]==1):
+                        count+=1                
+
+                if(mapa[s1[0]-1][s1[1]]==1):
+                        count+=1
+
+                if(mapa[s1[0]][s1[1]+1]==1):
+                        count+=1
+
+                if(mapa[s1[0]][s1[1]-1]==1):
+                        count+=1
+
+                matrices[i].append(count/4)
+
+            else:
+                matrices[i].append(0.25)   
 
 
-    for n,i in enumerate(states):
-        matrix=[]
-        count=0
-        for r in range(6):
-            matrix.append([])
-            for j in range (18):
-                matrix[r].append(0)
 
-        if(mapa[i[0]+1][i[1]]==1):
-                count+=1                
-        else:
-            matrix[i[0]+1][i[1]]=0.25
-        if(mapa[i[0]-1][i[1]]==1):
-                count+=1
-        else:
-            matrix[i[0]-1][i[1]]=0.25
-        if(mapa[i[0]][i[1]+1]==1):
-                count+=1
-        else:
-            matrix[i[0]][i[1]+1]=0.25
-        if(mapa[i[0]][i[1]-1]==1):
-                count+=1
-        else:
-            matrix[i[0]][i[1]-1]=0.25
 
-        matrix[i[0]][i[1]]=count/4
 
-        matrices.append(matrix)
     return matrices
 
 def sequence(init_sequences):
@@ -206,12 +205,12 @@ def viterbi(obs_seq,A,B,pi):
 if __name__ == "__main__":  
 
     mapa=np.array(create_map())
-    obs_seq=sequence(init_secuence(1))
-    B=np.array(emision(mapa,init_secuence(1)))
+    obs_seq=sequence(init_secuence(1))   
     states=np.array(init_states(mapa))
+    B=np.array(emision(mapa,init_secuence(1),states))
     A=np.array(trans_matrix(mapa,states))
-    print(A)
     pi=np.array(states_prob_2(states))
+    print(A,A.shape)
    # pi=np.array(states_prob(mapa))
    # print(states.shape)
 
