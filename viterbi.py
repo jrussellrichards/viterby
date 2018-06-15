@@ -85,7 +85,7 @@ def states_prob_2(states):
         states_prob.append(1/len(states))
 
     return states_prob    
-def emision(mapa,sequence,states):
+def emision(mapa,sequence,states,e):
     m_emision = []
     n_states=len(states)
     n_obs=len(sequence)
@@ -97,17 +97,17 @@ def emision(mapa,sequence,states):
             j=stat[0]
             k=stat[1]
             if(i=="NS"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==0):
-                m_emision[s].append(700/64)
+                m_emision[s].append((1 - e) ** (4-discrepancia)) * (e ** discrepancia)
             elif(i=="NWE" and mapa[j+1][k]==0 and mapa[j-1][k]==1 and mapa[j][k-1]==1 and mapa[j][k+1]==1):
-                m_emision[s].append(200/64)
+                m_emision[s].append((1 - e) ** (4-discrepancia)) * (e ** discrepancia)
             elif(i=="NSE" and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==1 and mapa[j][k+1]==0):
-                m_emision[s].append(200/64)
+                m_emision[s].append((1 - e) ** (4-discrepancia)) * (e ** discrepancia)
             elif(i=="WE"  and mapa[j+1][k]==0 and mapa[j-1][k]==0 and mapa[j][k-1]==1 and mapa[j][k+1]==1):
-                m_emision[s].append(400/64)
+                m_emision[s].append((1 - e) ** (4-discrepancia)) * (e ** discrepancia)
             elif(i=="NSW"  and mapa[j+1][k]==1 and mapa[j-1][k]==1 and mapa[j][k-1]==0 and mapa[j][k+1]==1):
-                m_emision[s].append(200/64) 
+                m_emision[s].append((1 - e) ** (4-discrepancia)) * (e ** discrepancia)
             elif(i=="E"  and mapa[j+1][k]==0 and mapa[j-1][k]==0 and mapa[j][k-1]==1 and mapa[j][k+1]==0):
-                m_emision[s].append(200/64)
+                m_emision[s].append((1 - e) ** (4-discrepancia)) * (e ** discrepancia)
             else:
                 m_emision[s].append(0)   
 
@@ -184,11 +184,10 @@ def viterbi(obs_seq,A,B,pi):
         N = A.shape[0]
         delta = np.zeros((T, N))
         psi = np.zeros((T, N))
-        aux=B[:,obs_seq[0]].T
-        delta[0] = pi.dot(aux)
+        delta[0] = pi*B[:,obs_seq.index(obs_seq[0])]
         for t in range(1, T):
             for j in range(N):
-                delta[t,j] = np.max(delta[t-1]*A[:,j]) * B[j, obs_seq[t]]
+                delta[t,j] = np.max(delta[t-1]*A[:,j]) * B[j, obs_seq.index(obs_seq[t])]
                 psi[t,j] = np.argmax(delta[t-1]*A[:,j])
 
         # backtrack
@@ -206,7 +205,7 @@ def viterbi(obs_seq,A,B,pi):
 if __name__ == "__main__":  
 
     mapa=np.array(create_map())
-    obs_seq=np.array(sequence(init_secuence(1))) 
+    obs_seq=sequence(init_secuence(1))
     states=np.array(init_states(mapa))
     B=np.array(emision(mapa,init_secuence(1),states))
     B=B.T
@@ -220,7 +219,7 @@ if __name__ == "__main__":
    # pi=np.array(states_prob(mapa))
    # print(states.shape)
 
-    viterbi(obs_seq,A, B,pi)
+    print(viterbi(obs_seq,A, B,pi))
     #print(trans[0])
 
     
