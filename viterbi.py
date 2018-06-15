@@ -16,7 +16,7 @@ def create_map():
             mapa[i].append(0)
 
     mapa[0][4]=1
-    mapa[0][9]=3
+    mapa[0][9]=0
     mapa[0][10]=1
     mapa[0][14]=1
     mapa[1][0]=1
@@ -35,7 +35,7 @@ def create_map():
     mapa[2][7]=1
     mapa[2][13]=1
     mapa[2][14]=1
-    mapa[2][15]=2
+    mapa[2][15]=0
     mapa[3][2]=1
     mapa[3][6]=1
     mapa[3][2]=1
@@ -119,7 +119,7 @@ def init_states(mapa):
 
     for i,r in enumerate(mapa):                
         for j,c in enumerate(r):            
-            if(mapa[i][j]==0):
+            if(mapa[i][j]!=1  ):
                 states.append([i,j])    
 
     return states
@@ -184,7 +184,8 @@ def viterbi(obs_seq,A,B,pi):
         N = A.shape[0]
         delta = np.zeros((T, N))
         psi = np.zeros((T, N))
-        delta[0] = pi*B[:,obs_seq[0]]
+        aux=B[:,obs_seq[0]].T
+        delta[0] = pi.dot(aux)
         for t in range(1, T):
             for j in range(N):
                 delta[t,j] = np.max(delta[t-1]*A[:,j]) * B[j, obs_seq[t]]
@@ -195,7 +196,7 @@ def viterbi(obs_seq,A,B,pi):
         states[T-1] = np.argmax(delta[T-1])
         for t in range(T-2, -1, -1):
             states[t] = psi[t+1, states[t+1]]
-        return states
+        return states 
 
     #A Matriz de transicion
     #B Matriz de probabilidad de emision
@@ -205,12 +206,17 @@ def viterbi(obs_seq,A,B,pi):
 if __name__ == "__main__":  
 
     mapa=np.array(create_map())
-    obs_seq=sequence(init_secuence(1))   
+    obs_seq=np.array(sequence(init_secuence(1))) 
     states=np.array(init_states(mapa))
     B=np.array(emision(mapa,init_secuence(1),states))
+    B=B.T
     A=np.array(trans_matrix(mapa,states))
     pi=np.array(states_prob_2(states))
-    print(A,A.shape)
+
+
+   # print(B,B.shape)
+   # print(A,A.shape)
+   # print(pi,pi.shape)
    # pi=np.array(states_prob(mapa))
    # print(states.shape)
 
